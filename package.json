@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "dev": "(cd frontend && npm run build) && (cd ../backend && npx tsc && node dist/server.js)",
+    "start": "(cd backend && node dist/server.js)"
+  }
+}
