@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import Token from './Token'
+import Token from './board/Token'
 import {socket} from './socket'
 
 type PresetMenuProps = {

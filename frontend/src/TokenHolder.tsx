@@ -1,5 +1,5 @@
 import {useState, useEffect} from 'react'
-import Token from './Token'
+import Token from './board/Token'
 import {type Token as TokenType} from './types/types'
 import {socket} from './socket'
 

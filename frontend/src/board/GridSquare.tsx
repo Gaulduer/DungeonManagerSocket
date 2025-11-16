@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import Token from '../Token.js';
+import Token from './Token.js';
 import {type Token as TokenType} from '../types/types.js';
 import {socket} from '../socket.js';
 

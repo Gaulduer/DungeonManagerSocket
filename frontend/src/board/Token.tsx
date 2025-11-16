@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import {type Token as TokenType} from './types/types.js'
+import {type Token as TokenType} from '../types/types.js'
 
 type TokenProps = {
   token: TokenType
