@@ -74,7 +74,7 @@ function Board(props: BoardProps) {
             flexDirection: 'column',
             backgroundColor: '#777777',
             backgroundSize: '100% 100%',
-            background: (image === '' ? '':`url(${image})`)
+            backgroundImage: (image === '' ? '':`url(${image})`)
           }} 
           onDoubleClick={() => props.callback(true)}>
           {
