@@ -25,21 +25,20 @@ function GridSquare(props: GridSquareProps) {
     setHovering(false);
   }
 
-  function handleDragStart(e: React.DragEvent) {
+  function handleDragStart() {
     setDraggingFrom(true);
-    handleDragEnter(e);
   }
 
   function handleDragEnd() {
-    if (!draggingTo)
-      setDraggingFrom(false);
+    setDraggingFrom(false);
   }
 
 
   function handleDragEnter(e: React.DragEvent) {
     console.log(e.dataTransfer.getData('token'));
     //setDisplay(token);
-    setDraggingTo(true);
+    if (!draggingFrom)
+      setDraggingTo(true);
   }
 
   function handleDragExit(e: React.DragEvent) {
@@ -52,7 +51,7 @@ function GridSquare(props: GridSquareProps) {
   function handleDrop(e: React.DragEvent) {
     console.log("DROPPED!");
     e.preventDefault();
-    if(!draggingFrom && draggingTo) socket.emit('place', props.row, props.col, JSON.parse(e.dataTransfer.getData('token')));
+    if(draggingTo) socket.emit('place', props.row, props.col, JSON.parse(e.dataTransfer.getData('token')));
     setDraggingFrom(false);
     setDraggingTo(false);
   }
@@ -76,7 +75,7 @@ function GridSquare(props: GridSquareProps) {
       }}           
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onDragStart={(e: React.DragEvent) => handleDragStart(e)}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragOver={(e: React.DragEvent) => e.preventDefault()}
       onDragEnter={(e: React.DragEvent) => handleDragEnter(e)}
@@ -85,6 +84,7 @@ function GridSquare(props: GridSquareProps) {
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
     >
+      <div style={{position: 'absolute', zIndex: '1', width: '100%', height: '100%', backgroundColor: '#00000000'}}></div>
       {props.tokens.map((token, index) => {
         return <Token key={token.id + '' + token.placement!.id} token={token} heightOffset={props.tokens.length - 1  - index} hovering={hovering} />;  
       })}

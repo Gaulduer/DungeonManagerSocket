@@ -68,7 +68,6 @@ function Board(props: BoardProps) {
       <div id="board" style={{outline: '2px solid #CCCCCC'}}>
         <div id="inner-board"
           style={{
-            overflowX: 'scroll',
             maxWidth: (squareSize * 11) + 'px',
             display: 'flex',
             alignItems: 'flex-start',

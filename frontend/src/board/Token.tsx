@@ -36,7 +36,7 @@ function Token(props: TokenProps) {
     <div id={props.token.id + ''} className="token" draggable 
       style={{
         position: props.token.placement === undefined ? 'relative':'absolute',
-        zIndex: props.hovering || props.token.placement === undefined ? '2':'-1',
+        zIndex: props.hovering || props.token.placement === undefined ? '2':'0',
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
