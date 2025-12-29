@@ -1,44 +1,56 @@
 import { useState, useEffect } from 'react'
 import GridSquare from './GridSquare.js';
 import { Board as BoardModel } from '../models/Board.js';
-import {type Token, type Placement} from '../types/types.js';
+import {type Placement} from '../types/types.js';
 import {socket} from '../socket.js';
 
 type BoardProps = {
   callback: (open: boolean) => void;
 }
 
-const board = new BoardModel(0, 0);
+const tokenBoard: BoardModel = new BoardModel(0, 0);
+const tileBoard: BoardModel = new BoardModel(0, 0);
 
 function Board(props: BoardProps) {
-  const [model, setModel] = useState<Token[][][]>(board.model);
+  const [tokenPlacements, setTokenPlacements] = useState<Placement[][][]>(tokenBoard.placements);
+  const [tilePlacements, setTilePlacements] = useState<Placement[][][]>(tileBoard.placements);
   const [image, setImage] = useState<string>('');
   const [squareSize, setSquareSize] = useState<number>(0);
 
   useEffect(() => {
-    socket.on('place', (placement: Placement, token: Token) => {
-      board.place(placement, token);
-      copyModel();
-      console.log("Placing!");
+    socket.on('log', (message: string) => console.log(message));
+
+    socket.on('place', (placement: Placement) => {
+      console.log(placement);
+      if(placement.type === 'token')
+        tokenBoard.place(placement);
+      else if (placement.type === 'tile')
+        tileBoard.place(placement);
+      renderPlacements();
     });
 
     socket.on('remove', (placement: Placement) => {
-      board.remove(placement);
-      copyModel();
-      console.log("Removing");
+      if (placement.type === 'token')
+        tokenBoard.remove(placement);
+      else (placement.type === 'tile')
+        tileBoard.remove(placement);
     });
 
     socket.on('board-update', (width: number, height: number, image: string, squareSize: number) => {
       updateBoard(width, height, image, squareSize);
-      copyModel();
-      console.log('board-update!');
+      renderPlacements();
     });
 
-    socket.emit('get-board', (width: number, height: number, image: string, squareSize: number, tokens: Token[]) => {
+    socket.emit('get-board', (width: number, height: number, image: string, squareSize: number, tokens: Placement[], tiles: Placement[]) => {
+      console.log("GOT BOARD!");
+      console.log(width, height, image, squareSize);
+      console.log(tokens, tiles);
+      tokenBoard.makePlacements(width, height);
+      tokenBoard.placeAll(tokens);
+      tileBoard.makePlacements(width, height);
+      tileBoard.placeAll(tiles);
       updateBoard(width, height, image, squareSize);
-      board.placeTokens(tokens);
-      copyModel();
-    })
+    });
 
     return () => {
       socket.off('place');
@@ -48,19 +60,23 @@ function Board(props: BoardProps) {
   }, []);
 
   function updateBoard(width: number, height: number, image: string, squareSize: number) {
-    board.makeModel(width, height);
+    console.log(width, height);
     setImage(image);
     setSquareSize(squareSize);
-    copyModel();
+    renderPlacements();
   }
   
-  function copyModel() {
-    setModel(() => board.model.map((row) => {
+  function renderPlacements() {
+    setTokenPlacements(() => tokenBoard.placements.map((row) => {
       return row.map((col) => {
         return col;
       })
     }));
-    //console.log(model);
+    setTilePlacements(() => tileBoard.placements.map((row) => {
+      return row.map((col) => {
+        return col;
+      })
+    }));
   }
 
   return (
@@ -78,11 +94,11 @@ function Board(props: BoardProps) {
           }} 
           onDoubleClick={() => props.callback(true)}>
           {
-            model.map((row, rowIndex) => {
+            tokenPlacements.map((row, rowIndex) => {
               return <div id={"Row-" + rowIndex} style={{display: 'flex', flexDirection: 'row'}}>
                 {
                   row.map((col, colIndex) => {
-                    return <GridSquare size={squareSize} row={rowIndex} col={colIndex} tokens={col}/>
+                    return <GridSquare size={squareSize} row={rowIndex} col={colIndex} tokens={col} tiles={tilePlacements[rowIndex][colIndex]}/>
                   })
                 }
               </div>

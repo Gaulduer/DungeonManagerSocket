@@ -1,7 +1,7 @@
 import express from "express";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
-import {type Token, type Placement} from './types.js';
+import {type Placement} from './types.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -9,8 +9,8 @@ const io = new Server(httpServer);
 
 let users = 0;
 let placementCount = 0;
-let placed: {[id: number]: Token} = {}; // A dictionary of tokens that have been placed.
-let presets: Token[] = []; // An array of preset tokens.
+let placed: {[id: number]: Placement} = {}; // A dictionary of items that have been placed.
+let presets: Placement[] = []; // An array of preset items.
 
 // Board values
 let width: number = 11;
@@ -32,53 +32,54 @@ io.on("connection", (socket: Socket) => {
 
     // Sent by: GridSquare.tsx
     // Sends to: Board.tsx
-    socket.on('place', (row: number, col: number, token: Token) => place(row, col, token))
+    socket.on('place', (row: number, col: number, placement: Placement) => place(row, col, placement))
     // Sent by: BoardMenu.tsx
     // Sent to: Board.tsx
     socket.on('board-update', (newWidth: number, newHeight: number, newImage: string, newSquareSize: number) => updateBoard(newWidth, newHeight, newImage, newSquareSize));
     // Sent by: Board.tsx
-    socket.on('get-board', (callback) => callback(width, height, image, squareSize, Object.values(placed)))
+    socket.on('get-board', (callback) => callback(width, height, image, squareSize, Object.values(placed).filter(placement => placement.type === 'token'), Object.values(placed).filter(placement => placement.type === 'tile')))
     // Sent by: TokenHolder.tsx
     // Sends to: Board.tsx
-    socket.on('remove', (placement: Placement) => remove(placement))
-    // Sent by: PresetMenu.tsx
-    // Sends to: TokenHolder.tsx
-    socket.on('add-preset', (preset: Token) => addPreset(preset));
-    // Sent by: TokenHolder.tsx
-    socket.on('get-presets', (callback) => callback(presets));
+    socket.on('remove', (preset: Placement) => remove(preset))
+    // Sent by: PresetTokenMenu.tsx, PresetTileMenu.tsx
+    // Sends to: TokenHolder.tsx, TileHolder.tsx
+    socket.on('add-preset', (preset: Placement) => addPreset(preset));
+    // Sent by: TokenHolder.tsx, TileHolder.tsx
+    socket.on('get-presets', (type: string, callback: (presets: Placement[]) => void) => callback(presets.filter(preset => preset.type === type)));
 });
 
-function place(row: number, col: number, token: Token) {
-  let placement = {x: row, y: col, id: -1};
-  console.log('Placing!', token);
-      
-  if(token.placement === undefined) {
+function place(row: number, col: number, placement: Placement) {
+  io.emit('log', 'Placement: ' + placement.content);
+  console.log(placement);
+  console.log(row, col);
+  if(row === undefined || col === undefined)
+    return;
+  if(placement.id < 0) {
     placement.id = placementCount++; // Placement was not previously defined, so we create a unique placement id.
-    io.emit('place', placement, token); // Emit before changing placement. This tells the frontend important info.
-    token.placement = placement;
-    placed[token.placement.id] = token;
   }
   else {
-    placement.id = token.placement.id; // The placement id must be maintained.
-    io.emit('place', placement, token); // Emit before changing placement. This tells the frontend important info.
-    placed[token.placement.id]!.placement = placement;
+    io.emit('remove', placement);
   }
+  placement.x = row;
+  placement.y = col;
+  placed[placement.id] = placement; 
+  io.emit('place', placement, row, col); // Emit before changing placement. This tells the frontend important info.
 }
 
-function remove(placement: Placement) {
-  if(!placement)
+function remove(placement: Placement) { 
+  if(placed[placement.id] !== undefined)
     return;
+
+  delete placed[placement.id];
   
-  if(placed[placement.id])
-    delete placed[placement.id];
   console.log('removed', placement.id);
   io.emit('remove', placement);
 }
 
-function addPreset(preset: Token) {
-  preset.id = presets.length;
+function addPreset(preset: Placement) {
+  preset.contentID = presets.length;
   presets.push(preset);
-  io.emit('preset', preset);
+  io.emit('preset-' + preset.type, preset);
 }
 
 function updateBoard(newWidth: number, newHeight: number, newImage: string, newSquareSize: number) {

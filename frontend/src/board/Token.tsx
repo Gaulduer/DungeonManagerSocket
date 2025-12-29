@@ -1,18 +1,17 @@
 import {useState} from 'react'
-import {type Token as TokenType} from '../types/types.js'
+import {type Token as TokenType, type Placement} from '../types/types.js'
 
-type TokenProps = {
-  token: TokenType
+function Token(props: {
+  placement: Placement
   heightOffset?: number;
   hovering?: boolean;
-}
-
-function Token(props: TokenProps) {
+}) {
   const [grabbed, setGrabbed] = useState<boolean>(false);
   const [context, setContext] = useState<boolean>(false);
+  const token: TokenType = JSON.parse(props.placement.content);
 
   function handleDragStart(e: React.DragEvent) {
-    e.dataTransfer.setData('token', JSON.stringify(props.token));
+    e.dataTransfer.setData('placement', JSON.stringify(props.placement));
     setGrabbed(true);
   }
 
@@ -23,7 +22,6 @@ function Token(props: TokenProps) {
   function handleContextMenu(e: React.MouseEvent) {
     e.preventDefault();
     setContext(true);
-    console.log(props.token);
   }
 
   function handleMouseLeave(e: React.MouseEvent) {
@@ -33,16 +31,16 @@ function Token(props: TokenProps) {
 
   return (
    <>
-    <div id={props.token.id + ''} className="token" draggable 
+    <div id={props.placement.id + ''} className="token" draggable 
       style={{
-        position: props.token.placement === undefined ? 'relative':'absolute',
-        zIndex: props.hovering || props.token.placement === undefined ? '2':'0',
+        position:'absolute',
+        zIndex: props.hovering ? '2':'0',
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
-        width: '100%', 
-        height: '100%', 
-        backgroundColor: props.token.outline ? props.token.outline:"#333333", 
+        width: '100px', 
+        height: '100px', 
+        backgroundColor: token.outline ? token.outline:"#333333", 
         opacity: grabbed ? '0.5':'1.0',
         borderRadius: '50%', 
         cursor: 'grab',
@@ -54,14 +52,14 @@ function Token(props: TokenProps) {
       onContextMenu={handleContextMenu}
       onMouseLeave={(handleMouseLeave)}
     >
-      <div id={props.token.id + ''} className="innerToken" draggable style={{
+      <div id={token.id + ''} className="innerToken" draggable style={{
         alignSelf: 'center', 
         width: '90%', 
         height: '90%', 
         backgroundColor: "#333333", 
         borderRadius: '50%', 
         cursor: 'grab', 
-        backgroundImage: props.token.backgroundImage ? `url(${props.token.backgroundImage})`:'', 
+        backgroundImage: token.backgroundImage ? `url(${token.backgroundImage})`:'', 
         backgroundSize: '100% 100%'
       }} />
       {context ? <div style={{position: "absolute", width: '100px', height: '100px', backgroundColor: '#333333'}}></div>:<></>}

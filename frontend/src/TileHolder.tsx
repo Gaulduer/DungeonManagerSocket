@@ -1,23 +1,19 @@
 import {useState, useEffect} from 'react'
-import Token from './board/Token'
+import Tile from './board/Tile'
 import {type Placement} from './types/types'
 import {socket} from './socket'
 
-type TokenHolderProps = {
-  callback: (open: boolean) => void;
-}
-
-function TokenHolder(props: TokenHolderProps) {
+function TileHolder(props: {callback: (open: boolean) => void}) {
   const [presets, setPresets] = useState<Placement[]>([])
 
   useEffect(() => {
-    socket.emit('get-presets', 'token', (presets: Placement[]) => {
+    socket.emit('get-presets', 'tile', (presets: Placement[]) => {
       setPresets(presets);
     });
 
-    socket.on('preset-token', (preset: Placement) => {
+    socket.on('preset-tile', (preset: Placement) => {
       setPresets(presets => [...presets, preset]);
-      console.log("Presets: ", presets);
+      console.log("Presets: ", preset);
     });
   }, []);
 
@@ -25,7 +21,7 @@ function TokenHolder(props: TokenHolderProps) {
     console.log(e.dataTransfer.getData('row'));
     console.log(e.dataTransfer.getData('col'));
     if(e.dataTransfer.getData('row') !== undefined && e.dataTransfer.getData('col') !== undefined) {
-      socket.emit('free', JSON.parse(e.dataTransfer.getData('placement')).placement);
+      socket.emit('free', JSON.parse(e.dataTransfer.getData('tile')).placement);
     }  
   }
 
@@ -36,12 +32,12 @@ function TokenHolder(props: TokenHolderProps) {
     >
       {presets.map(preset => {
         return <div style={{width: '100px', height: '100px'}}>
-          <Token placement={preset} />
+          <Tile placement={preset} />
         </div>
       })}
-      <button style={{width: '100px', height: '100px', backgroundColor: '#777777', borderRadius: '50%'}} onClick={() => props.callback(true)}>+</button>
+      <button style={{width: '100px', height: '100px', backgroundColor: '#777777'}} onClick={() => props.callback(true)}>+</button>
     </div>
   </>
 }
 
-export default TokenHolder;
+export default TileHolder;

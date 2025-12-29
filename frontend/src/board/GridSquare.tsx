@@ -1,13 +1,15 @@
 import React, {useState} from 'react';
 import Token from './Token.js';
-import {type Token as TokenType} from '../types/types.js';
+import Tile from './Tile.js';
+import {type Placement} from '../types/types.js';
 import {socket} from '../socket.js';
 
 type GridSquareProps = {
   size: number;
   row: number;
   col: number;
-  tokens: TokenType[]
+  tokens: Placement[];
+  tiles: Placement[];
 }
 
 function GridSquare(props: GridSquareProps) {
@@ -15,8 +17,7 @@ function GridSquare(props: GridSquareProps) {
   const [hovering, setHovering] = useState<boolean>(false); // Indicates if background should be green.
   const [draggingFrom, setDraggingFrom] = useState<boolean>(false); // Indicates if background should be red.
   const [draggingTo, setDraggingTo] = useState<boolean>(false); // Indicates if background should be green.
-  const [display, setDisplay] = useState<TokenType>(); // Displays token about to be placed.
-
+  
   function handleMouseEnter() {
     setHovering(true);
   }
@@ -35,7 +36,7 @@ function GridSquare(props: GridSquareProps) {
 
 
   function handleDragEnter(e: React.DragEvent) {
-    console.log(e.dataTransfer.getData('token'));
+    console.log(e.dataTransfer.getData('placement'));
     //setDisplay(token);
     if (!draggingFrom)
       setDraggingTo(true);
@@ -43,21 +44,24 @@ function GridSquare(props: GridSquareProps) {
 
   function handleDragExit(e: React.DragEvent) {
     e.preventDefault();
-    setDisplay(undefined);
     setHovering(false);
     setDraggingTo(false);
   }
 
   function handleDrop(e: React.DragEvent) {
-    console.log("DROPPED!");
     e.preventDefault();
-    if(draggingTo) socket.emit('place', props.row, props.col, JSON.parse(e.dataTransfer.getData('token')));
+
+    console.log(JSON.parse(e.dataTransfer.getData('placement')));
+    if(draggingTo) {
+      socket.emit('place', props.row, props.col, JSON.parse(e.dataTransfer.getData('placement')));
+    }
+
     setDraggingFrom(false);
     setDraggingTo(false);
   }
 
   function handleClick() {
-  
+    console.log("ITEMS\n", props.tokens, props.tiles);
   }
 
   function handleDoubleClick() {
@@ -85,10 +89,14 @@ function GridSquare(props: GridSquareProps) {
       onDoubleClick={handleDoubleClick}
     >
       <div style={{position: 'absolute', zIndex: '1', width: '100%', height: '100%', backgroundColor: '#00000000'}}></div>
-      {props.tokens.map((token, index) => {
-        return <Token key={token.id + '' + token.placement!.id} token={token} heightOffset={props.tokens.length - 1  - index} hovering={hovering} />;  
+      {props.tiles.map((placement) => {
+        const contentID = JSON.parse(placement.content).id;
+        return <Tile key={placement.id + '-' + contentID} placement={placement} hovering={hovering} />;  
       })}
-      {display === undefined ? <></>:<Token token={display}/>}
+      {props.tokens.map((placement, index) => {
+        const contentID = JSON.parse(placement.content).id;
+        return <Token key={placement.id + '-' + contentID} placement={placement} heightOffset={props.tokens.length - 1  - index} hovering={hovering} />;  
+      })}
     </div>
    </>
   )

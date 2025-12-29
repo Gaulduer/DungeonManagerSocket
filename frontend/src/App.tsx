@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react';
-import './App.css';
-import {socket} from './socket';
-import Board from './board/Board';
-import TokenHolder from './TokenHolder';
-import PresetMenu from './PresetMenu'
+import { useState, useEffect } from 'react'
+import './App.css'
+import {socket} from './socket'
+import Board from './board/Board'
+import TokenHolder from './TokenHolder'
+import TileHolder from './TileHolder'
+import PresetTokenMenu from './PresetTokenMenu'
+import PresetTileMenu from './PresetTileMenu'
 import BoardMenu from './BoardMenu'
 
 function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [users, setUsers] = useState(0);
-  const [presetMenuOpen, setPresetMenuOpen] = useState(false);
+  const [tokenMenuOpen, setTokenMenuOpen] = useState(false);
+  const [tileMenuOpen, setTileMenuOpen] = useState(false);
   const [boardMenuOpen, setBoardMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -35,23 +38,17 @@ function App() {
   function onUsers(users: number) {
     setUsers(users);
   }
-
-  function setPresetMenu(open: boolean) {
-    setPresetMenuOpen(open);
-  }
-
-  function setBoardMenu(open: boolean) {
-    setBoardMenuOpen(open);
-  }
   
   return (
     <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
       <p>Connected?: { '' + isConnected }</p>
       <p>Users: { isConnected ? users:'N/A'}</p>
-      <TokenHolder callback={setPresetMenu} />
-      <Board callback={setBoardMenu} />
-      {presetMenuOpen ? <PresetMenu callback={setPresetMenu}/>:<></>}
-      {boardMenuOpen ? <BoardMenu callback={setBoardMenu}/>:<></>}
+      <TokenHolder callback={setTokenMenuOpen} />
+      <TileHolder callback={setTileMenuOpen} />
+      <Board callback={setBoardMenuOpen} />
+      {tokenMenuOpen ? <PresetTokenMenu callback={setTokenMenuOpen}/>:<></>}
+      {tileMenuOpen ? <PresetTileMenu callback={setTileMenuOpen}/>:<></>}
+      {boardMenuOpen ? <BoardMenu callback={setBoardMenuOpen}/>:<></>}
     </div>
   )
 }
