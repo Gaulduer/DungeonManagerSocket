@@ -21,13 +21,13 @@ function Tile(props: {
    <>
     <div id={props.placement.id + ''} className="tile" draggable 
       style={{
-        position: 'absolute',
+        position: props.placement.id === -1 ? 'relative':'absolute',
         zIndex: props.hovering ? '2':'0',
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
-        width: '100px', 
-        height: '100px', 
+        width: '100%', 
+        height: '100%', 
         backgroundColor: "#333333", 
         backgroundSize: '100% 100%',
         backgroundImage: tile.backgroundImage ? `url(${tile.backgroundImage})`:'',

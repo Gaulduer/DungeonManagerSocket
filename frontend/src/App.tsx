@@ -14,6 +14,7 @@ function App() {
   const [tokenMenuOpen, setTokenMenuOpen] = useState(false);
   const [tileMenuOpen, setTileMenuOpen] = useState(false);
   const [boardMenuOpen, setBoardMenuOpen] = useState(false);
+  const [placementSelection, setPlacementSelection] = useState<string>("Placement");
 
   useEffect(() => {
     socket.on('connect', onConnect);
@@ -43,8 +44,13 @@ function App() {
     <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
       <p>Connected?: { '' + isConnected }</p>
       <p>Users: { isConnected ? users:'N/A'}</p>
-      <TokenHolder callback={setTokenMenuOpen} />
-      <TileHolder callback={setTileMenuOpen} />
+      <select id='placement-selection' style={{marginBottom: '10px'}} onChange={(e) => setPlacementSelection(e.target.value)}>
+        <option value="Placement">Placement</option>
+        <option value="Tokens">Tokens</option>
+        <option value="Tiles">Tiles</option>
+      </select>
+      {placementSelection === "Tokens" ? <TokenHolder callback={setTokenMenuOpen} />:<></>}
+      {placementSelection === "Tiles" ? <TileHolder callback={setTileMenuOpen} />:<></>}
       <Board callback={setBoardMenuOpen} />
       {tokenMenuOpen ? <PresetTokenMenu callback={setTokenMenuOpen}/>:<></>}
       {tileMenuOpen ? <PresetTileMenu callback={setTileMenuOpen}/>:<></>}

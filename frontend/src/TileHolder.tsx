@@ -18,11 +18,10 @@ function TileHolder(props: {callback: (open: boolean) => void}) {
   }, []);
 
   function handleDrop(e: React.DragEvent) {
-    console.log(e.dataTransfer.getData('row'));
-    console.log(e.dataTransfer.getData('col'));
-    if(e.dataTransfer.getData('row') !== undefined && e.dataTransfer.getData('col') !== undefined) {
-      socket.emit('free', JSON.parse(e.dataTransfer.getData('tile')).placement);
-    }  
+    const placement: Placement = JSON.parse(e.dataTransfer.getData('placement'));
+    if(placement.id !== -1) {
+      socket.emit('remove', placement);
+    }
   }
 
   return <>

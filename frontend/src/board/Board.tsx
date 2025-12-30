@@ -34,6 +34,7 @@ function Board(props: BoardProps) {
         tokenBoard.remove(placement);
       else (placement.type === 'tile')
         tileBoard.remove(placement);
+      renderPlacements();
     });
 
     socket.on('board-update', (width: number, height: number, image: string, squareSize: number) => {

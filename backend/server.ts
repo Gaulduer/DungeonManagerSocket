@@ -49,9 +49,6 @@ io.on("connection", (socket: Socket) => {
 });
 
 function place(row: number, col: number, placement: Placement) {
-  io.emit('log', 'Placement: ' + placement.content);
-  console.log(placement);
-  console.log(row, col);
   if(row === undefined || col === undefined)
     return;
   if(placement.id < 0) {
@@ -67,12 +64,11 @@ function place(row: number, col: number, placement: Placement) {
 }
 
 function remove(placement: Placement) { 
-  if(placed[placement.id] !== undefined)
+  if(placed[placement.id] === undefined)
     return;
 
   delete placed[placement.id];
   
-  console.log('removed', placement.id);
   io.emit('remove', placement);
 }
 

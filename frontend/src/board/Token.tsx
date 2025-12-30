@@ -33,13 +33,13 @@ function Token(props: {
    <>
     <div id={props.placement.id + ''} className="token" draggable 
       style={{
-        position:'absolute',
+        position: props.placement.id === -1 ? 'relative':'absolute',
         zIndex: props.hovering ? '2':'0',
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
-        width: '100px', 
-        height: '100px', 
+        width: '100%', 
+        height: '100%', 
         backgroundColor: token.outline ? token.outline:"#333333", 
         opacity: grabbed ? '0.5':'1.0',
         borderRadius: '50%', 
@@ -52,7 +52,7 @@ function Token(props: {
       onContextMenu={handleContextMenu}
       onMouseLeave={(handleMouseLeave)}
     >
-      <div id={token.id + ''} className="innerToken" draggable style={{
+      <div id={props.placement.contentID + ''} className="innerToken" draggable style={{
         alignSelf: 'center', 
         width: '90%', 
         height: '90%', 
