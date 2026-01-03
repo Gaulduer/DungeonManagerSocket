@@ -19,7 +19,7 @@ export class Board {
 
     place(placement: Placement): void {
         if(this.validPlacement(placement)) {
-            this.placements[placement.x][placement.y].push(placement);
+            this.placements[placement.y][placement.x].push(placement);
             console.log('Now placing!');
         }
         else
@@ -30,15 +30,15 @@ export class Board {
         if (!this.validPlacement(placement))
             return;
 
-        this.placements[placement.x][placement.y].filter((existingPlacement, index) => {
+        this.placements[placement.y][placement.x].filter((existingPlacement, index) => {
             if(existingPlacement.id === placement.id)
-                this.placements[placement!.x][placement!.y][index] = placement;
+                this.placements[placement!.y][placement!.x][index] = placement;
         });
     }
 
     remove(placement: Placement): void {
         if(this.validPlacement(placement))
-            this.placements[placement.x][placement.y] = this.placements[placement.x][placement.y].filter(existingPlacement => existingPlacement.id !== placement.id);
+            this.placements[placement.y][placement.x] = this.placements[placement.y][placement.x].filter(existingPlacement => existingPlacement.id !== placement.id);
     }
 
     get(row: number, col: number): Placement[] {

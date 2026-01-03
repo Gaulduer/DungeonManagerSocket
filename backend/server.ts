@@ -57,8 +57,8 @@ function place(row: number, col: number, placement: Placement) {
   else {
     io.emit('remove', placement);
   }
-  placement.x = row;
-  placement.y = col;
+  placement.x = col;
+  placement.y = row;
   placed[placement.id] = placement; 
   io.emit('place', placement, row, col); // Emit before changing placement. This tells the frontend important info.
 }
