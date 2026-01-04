@@ -2,21 +2,57 @@ import express from "express";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
 import {type Placement} from './types.js';
+import SQLHandler from './SQLHandler.js'
 
+const sqlHandler = new SQLHandler();
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
 let users = 0;
-let placementCount = 0;
 let placed: {[id: number]: Placement} = {}; // A dictionary of items that have been placed.
-let presets: Placement[] = []; // An array of preset items.
+let presets: {[id: number]: Placement} = {}; // An array of preset items.
+
+// Current settings
+let campaignID: number = -1;
+let mapID: number = -1;
 
 // Board values
 let width: number = 11;
 let height: number = 11;
 let image: string = '';
 let squareSize: number = 100;
+
+sqlHandler.createTables(sqlHandler.defaultTables).then(async () => {
+  return await sqlHandler.getCampaignID("Default")
+}).then(async campaignID => {
+  return [campaignID, await sqlHandler.getMapID(campaignID, "Default")];
+}).then(ids => {
+  campaignID = ids[0];
+  mapID = ids[1];
+  getData();
+  console.log(campaignID, mapID);
+});
+
+async function getData() {
+  const presetData = await sqlHandler.getPresets(campaignID);
+  const placementData = await sqlHandler.getPlacements(mapID);
+  console.log(presetData);
+  for (let i = 0 ; i < presetData.length ; i++) {
+    const preset = {x: -1, y: -1, id: -1, type: presetData[i].type, contentID: presetData[i].id, content: presetData[i].content};
+    presets[presetData[i].id] = preset;
+    io.emit('preset-' + preset.type, preset);
+    console.log("Adding preset:", preset);
+  }
+
+  for (let i = 0 ; i < placementData.length ; i++) {
+    const placement: Placement = {x: placementData[i].x, y: placementData[i].y, id: placementData[i].id, type: presetData[i].type, contentID: presetData[i].preset_id, content: presets[placementData[i].preset_id]!.content};
+    placed[placementData[i].id] = placement;
+    io.emit('place', placement);
+    //console.log("Adding placement:", placementData[i], placementData[i].preset_id, presets[placementData.]);
+  }
+  //console.log(presets);
+}
 
 io.on("connection", (socket: Socket) => {
     users += 1;
@@ -45,22 +81,39 @@ io.on("connection", (socket: Socket) => {
     // Sends to: TokenHolder.tsx, TileHolder.tsx
     socket.on('add-preset', (preset: Placement) => addPreset(preset));
     // Sent by: TokenHolder.tsx, TileHolder.tsx
-    socket.on('get-presets', (type: string, callback: (presets: Placement[]) => void) => callback(presets.filter(preset => preset.type === type)));
+    socket.on('get-presets', (type: string, callback: (presets: Placement[]) => void) => callback(Object.values(presets).filter(preset => preset.type === type)));
 });
 
 function place(row: number, col: number, placement: Placement) {
+  console.log("Placing", row, col, placement);
   if(row === undefined || col === undefined)
     return;
-  if(placement.id < 0) {
-    placement.id = placementCount++; // Placement was not previously defined, so we create a unique placement id.
+  if(placement.id < 0) { // Placement was not previously defined, so we insert it into the sql table and give it an id.
+    sqlHandler.insert("placement", [
+      {column: 'map_id', value: mapID + ''},
+      {column: 'x', value: col + ''},
+      {column: 'y', value: row + ''},
+      {column: 'preset_id', value: placement.contentID + ''}
+    ]).then(id => {
+      placement.id = id;
+      placement.x = col;
+      placement.y = row;
+      placed[placement.id] = placement; 
+      io.emit('place', placement);
+    });
   }
   else {
-    io.emit('remove', placement);
+    sqlHandler.updateByID("placement", placement.id, [
+      {column: 'x', value: col + ''},
+      {column: 'y', value: row + ''},
+    ]).then(id => {
+      io.emit('remove', placement); // Emit before placement is changed, this lets the front end delete the previous position.
+      placement.x = col;
+      placement.y = row;
+      placed[placement.id] = placement; 
+      io.emit('place', placement);
+    });
   }
-  placement.x = col;
-  placement.y = row;
-  placed[placement.id] = placement; 
-  io.emit('place', placement, row, col); // Emit before changing placement. This tells the frontend important info.
 }
 
 function remove(placement: Placement) { 
@@ -73,9 +126,12 @@ function remove(placement: Placement) {
 }
 
 function addPreset(preset: Placement) {
-  preset.contentID = presets.length;
-  presets.push(preset);
   io.emit('preset-' + preset.type, preset);
+  sqlHandler.insert('preset', [
+    {column: 'campaign_id', value: campaignID + ''}, 
+    {column: 'type', value: `'${preset.type}'`},
+    {column: 'content', value: `'${preset.content}'`},
+  ])
 }
 
 function updateBoard(newWidth: number, newHeight: number, newImage: string, newSquareSize: number) {
