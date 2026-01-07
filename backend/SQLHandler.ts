@@ -13,6 +13,7 @@ type Entry = {
 class SQLHandler {
     pool = mysql.createPool({
         host: process.env.HOST ? process.env.HOST:'localhost',
+        port: process.env.SQL_PORT ? parseInt(process.env.SQL_PORT):8080,
         user: process.env.USER ? process.env.USER:'root',
         password: process.env.PASSWORD ? process.env.PASSWORD:'',
         database: process.env.DATABASE ? process.env.DATABASE:''
@@ -52,7 +53,6 @@ class SQLHandler {
     ]
     
     constructor() {
-    
     }
 
     async tableExists(tableName: string) {
@@ -141,14 +141,12 @@ class SQLHandler {
 
         columnString += columns[columns.length - 1];
 
-        try {
-            this.pool.query(`SELECT ${columnString} FROM ${tableName};`).then((rows) => {
-                console.log(rows);
-            });
-        } catch (e) {
-            console.log('Failed to select.');
+        return this.pool.query(`SELECT ${columnString} FROM ${tableName};`).then((rows) => {
+            return Object.values(rows[0]);
+        }).catch((e) => {
             console.log(e);
-        }
+            return [];
+        });
     }
 
     async updateByID(tableName: string, id: number, entries: {column: string, value: string}[]): Promise<number> {
@@ -161,15 +159,13 @@ class SQLHandler {
 
         setString += entries[entries.length - 1]?.column + '=' + entries[entries.length - 1]?.value;
 
-        try {
-            return this.pool.query(`UPDATE ${tableName} ${setString} WHERE id = ${id};`).then(results => {
-                return Object.values(results[0])[2] // The third position of results holds the 'insertId'
-            });
-        } catch (e) {
-            console.log('Failed to insert.');
+        return this.pool.query(`UPDATE ${tableName} ${setString} WHERE id = ${id};`).then(results => {
+            return Object.values(results[0])[2] // The third position of results holds the 'insertId'
+        }).catch(e => {
+            console.log('Failed to insert');
             console.log(e);
-            return -1;
-        }
+            return -1; // If the update failed, return an invalid id.
+        });
     }
 
     async getCampaignID(tableName: string) {
@@ -211,15 +207,13 @@ class SQLHandler {
     }
 
     async getPlacements(mapID: number) {
-        try {
-            return this.pool.query(`SELECT * FROM placement WHERE map_id = ${mapID}`).then(results => {
-                console.log(results);
-                return Object.values(results[0]);
-            })
-        } catch (e) {
+        return this.pool.query(`SELECT * FROM placement WHERE map_id = ${mapID}`).then(results => {
+            console.log(results);
+            return Object.values(results[0]);
+        }).catch((e) => {
             console.log(e);
-            throw e;
-        }
+            return [];
+        })
     }
 }
 

@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "dev": "(cd frontend && npm run build) && (cd ../backend && npx tsc && node --env-file=.env dist/server.js dist/server.js)",
-    "start": "(cd backend && node --env-file=.env dist/server.js)"
+    "dev": "(cd frontend && npm run build) && (cd ../backend && npx tsc && node --env-file=local.env dist/server.js dist/server.js)",
+    "start": "(cd backend && node --env-file=cloud.env dist/server.js)"
   },
   "devDependencies": {
     "@types/mysql": "^2.15.27"
